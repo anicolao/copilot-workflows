@@ -40,6 +40,53 @@ The `copilot-setup-steps.yml` is a special GitHub Actions workflow that **GitHub
 3. **Trigger**: Must include `workflow_dispatch` trigger for Copilot to invoke it
 4. **Checkout**: Should checkout the repository so Copilot has access to code
 
+## Network Allowlist for Nix Flakes
+
+When using Nix flakes with GitHub Copilot's coding agent, you must add `api.github.com` to the network allowlist. This is required because:
+
+1. **Nix flakes fetch dependencies from GitHub** - The `flake.nix` file references `nixpkgs` from `github:NixOS/nixpkgs`, which requires access to the GitHub API
+2. **Flake lock file updates** - When `nix flake update` runs, it needs to query `api.github.com` to resolve the latest commits for flake inputs
+3. **direnv integration** - When `.envrc` uses `use flake`, direnv invokes Nix which needs GitHub API access to resolve and fetch flake inputs
+
+Without this allowlist entry, you'll see errors like:
+```
+error: unable to download 'https://api.github.com/repos/NixOS/nixpkgs/commits/HEAD': HTTP error 403
+response body: Blocked by DNS monitoring proxy
+```
+
+## Development Environment
+
+This repository includes a Nix flake-based development environment with:
+
+- **bun** - Fast JavaScript runtime and package manager
+- **vitest** - Test framework for the TypeScript project
+- **direnv** - Automatic environment loading
+
+### Usage
+
+```bash
+# Allow direnv to load the environment (one-time)
+direnv allow
+
+# Install dependencies
+bun install
+
+# Run tests
+bun test
+```
+
+### Project Structure
+
+```
+├── flake.nix          # Nix flake providing bun
+├── .envrc             # direnv config (use flake)
+├── package.json       # Dependencies (vitest, typescript)
+├── tsconfig.json      # TypeScript configuration
+└── src/
+    ├── plus.ts        # Example function: plus(a, b) => a + b
+    └── plus.test.ts   # Test: plus(1, 1) === 2
+```
+
 ## What You Can Configure
 
 ### 1. Runner Environment
