@@ -1,0 +1,257 @@
+# copilot-setup-steps.yml - GitHub Copilot Runner Environment Setup
+#
+# This workflow is AUTOMATICALLY invoked by GitHub Copilot when it needs to
+# perform tasks in your repository. It runs BEFORE Copilot starts working on
+# your issue or PR, preparing the environment with the tools and dependencies
+# Copilot will need.
+#
+# KEY CONCEPTS:
+# 1. This workflow runs in a GitHub-hosted runner, same as other Actions
+# 2. Copilot's coding agent receives the environment AFTER this setup completes
+# 3. Anything installed/configured here is available to Copilot during its work
+# 4. This workflow must have specific permissions and name to be recognized
+#
+# REQUIREMENTS:
+# - Must be named exactly: copilot-setup-steps.yml
+# - Must be in: .github/workflows/
+# - Must have: workflow_dispatch trigger for Copilot to invoke it
+# - Should be fast: Copilot waits for this to complete before starting
+
+name: "Copilot Setup Steps"
+
+# TRIGGER: workflow_dispatch allows Copilot to invoke this workflow
+# When Copilot is assigned to an issue or PR, it calls this workflow first
+on:
+  workflow_dispatch:
+
+# PERMISSIONS: Define what GitHub token capabilities are available
+# These permissions flow through to Copilot's environment
+permissions:
+  # Read repository contents (code, files, etc.)
+  contents: read
+  # Read/write pull request metadata (labels, comments, etc.)
+  pull-requests: read
+
+# JOBS: Setup steps that prepare the environment
+# You can have multiple jobs, but typically one is sufficient
+jobs:
+  # ============================================================================
+  # SETUP JOB: This is where environment preparation happens
+  # ============================================================================
+  setup:
+    # Runner type - this is the machine Copilot will use
+    # Options: ubuntu-latest, ubuntu-22.04, ubuntu-24.04, windows-latest, macos-latest
+    runs-on: ubuntu-latest
+
+    # =========================================================================
+    # STEPS: Each step prepares part of the environment
+    # =========================================================================
+    steps:
+      # -----------------------------------------------------------------------
+      # STEP 1: Checkout the repository
+      # This is essential - it provides access to your code
+      # Without this, Copilot would have an empty workspace
+      # -----------------------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history for better git operations
+          # Set to 1 for shallow clone (faster but limited git history)
+          fetch-depth: 0
+
+      # -----------------------------------------------------------------------
+      # EXPERIMENT: Print environment information
+      # This helps understand what's available in the runner
+      # -----------------------------------------------------------------------
+      - name: "[Experiment] Display runner environment info"
+        run: |
+          echo "=== RUNNER INFORMATION ==="
+          echo "Runner OS: ${{ runner.os }}"
+          echo "Runner Arch: ${{ runner.arch }}"
+          echo "Runner Name: ${{ runner.name }}"
+          echo "Runner Temp: ${{ runner.temp }}"
+          echo "Runner Tool Cache: ${{ runner.tool_cache }}"
+          echo ""
+          echo "=== GITHUB CONTEXT ==="
+          echo "Repository: ${{ github.repository }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "SHA: ${{ github.sha }}"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Run ID: ${{ github.run_id }}"
+          echo ""
+          echo "=== DIRECTORY STRUCTURE ==="
+          echo "Current directory: $(pwd)"
+          echo "Home directory: $HOME"
+          echo "Workspace: ${{ github.workspace }}"
+          ls -la
+          echo ""
+          echo "=== SYSTEM RESOURCES ==="
+          echo "CPU Info:"
+          nproc
+          echo "Memory Info:"
+          free -h
+          echo "Disk Space:"
+          df -h
+
+      # -----------------------------------------------------------------------
+      # EXPERIMENT: List pre-installed tools
+      # Ubuntu runners come with many tools pre-installed
+      # -----------------------------------------------------------------------
+      - name: "[Experiment] List pre-installed development tools"
+        run: |
+          echo "=== PRE-INSTALLED LANGUAGES & RUNTIMES ==="
+          echo "Node.js: $(node --version 2>/dev/null || echo 'not installed')"
+          echo "npm: $(npm --version 2>/dev/null || echo 'not installed')"
+          echo "Python: $(python3 --version 2>/dev/null || echo 'not installed')"
+          echo "pip: $(pip3 --version 2>/dev/null || echo 'not installed')"
+          echo "Ruby: $(ruby --version 2>/dev/null || echo 'not installed')"
+          echo "Go: $(go version 2>/dev/null || echo 'not installed')"
+          echo "Java: $(java -version 2>&1 | head -1 || echo 'not installed')"
+          echo "Rust: $(rustc --version 2>/dev/null || echo 'not installed')"
+          echo "PHP: $(php --version 2>/dev/null | head -1 || echo 'not installed')"
+          echo ""
+          echo "=== BUILD TOOLS ==="
+          echo "Make: $(make --version 2>/dev/null | head -1 || echo 'not installed')"
+          echo "CMake: $(cmake --version 2>/dev/null | head -1 || echo 'not installed')"
+          echo "GCC: $(gcc --version 2>/dev/null | head -1 || echo 'not installed')"
+          echo "Docker: $(docker --version 2>/dev/null || echo 'not installed')"
+          echo ""
+          echo "=== PACKAGE MANAGERS ==="
+          echo "apt: $(apt --version 2>/dev/null | head -1 || echo 'not installed')"
+          echo "yarn: $(yarn --version 2>/dev/null || echo 'not installed')"
+          echo "cargo: $(cargo --version 2>/dev/null || echo 'not installed')"
+
+      # -----------------------------------------------------------------------
+      # EXAMPLE: Install project dependencies
+      # Uncomment and modify based on your project type
+      # -----------------------------------------------------------------------
+      
+      # === Node.js Project Setup ===
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: '20'
+      #     cache: 'npm'
+      # 
+      # - name: Install Node.js dependencies
+      #   run: npm ci
+
+      # === Python Project Setup ===
+      # - name: Setup Python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.11'
+      #     cache: 'pip'
+      # 
+      # - name: Install Python dependencies
+      #   run: pip install -r requirements.txt
+
+      # === Go Project Setup ===
+      # - name: Setup Go
+      #   uses: actions/setup-go@v5
+      #   with:
+      #     go-version: '1.21'
+      # 
+      # - name: Download Go dependencies
+      #   run: go mod download
+
+      # === Java/Maven Project Setup ===
+      # - name: Setup Java
+      #   uses: actions/setup-java@v4
+      #   with:
+      #     distribution: 'temurin'
+      #     java-version: '17'
+      #     cache: 'maven'
+
+      # === Ruby Project Setup ===
+      # - name: Setup Ruby
+      #   uses: ruby/setup-ruby@v1
+      #   with:
+      #     ruby-version: '3.2'
+      #     bundler-cache: true
+
+      # === .NET Project Setup ===
+      # - name: Setup .NET
+      #   uses: actions/setup-dotnet@v4
+      #   with:
+      #     dotnet-version: '8.0.x'
+      # 
+      # - name: Restore .NET dependencies
+      #   run: dotnet restore
+
+      # -----------------------------------------------------------------------
+      # EXAMPLE: Install additional system tools
+      # -----------------------------------------------------------------------
+      # - name: Install additional tools
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y \
+      #       jq \
+      #       ripgrep \
+      #       fd-find \
+      #       tree \
+      #       httpie
+
+      # -----------------------------------------------------------------------
+      # EXAMPLE: Setup databases for testing
+      # -----------------------------------------------------------------------
+      # - name: Start PostgreSQL
+      #   run: |
+      #     docker run -d \
+      #       --name postgres \
+      #       -e POSTGRES_PASSWORD=postgres \
+      #       -p 5432:5432 \
+      #       postgres:15
+
+      # -----------------------------------------------------------------------
+      # EXPERIMENT: Set environment variables
+      # These will be available to Copilot's coding agent
+      # -----------------------------------------------------------------------
+      - name: "[Experiment] Set custom environment variables"
+        run: |
+          echo "CUSTOM_VAR=hello_from_setup" >> $GITHUB_ENV
+          echo "PROJECT_ROOT=${{ github.workspace }}" >> $GITHUB_ENV
+          echo "BUILD_TIME=$(date -Iseconds)" >> $GITHUB_ENV
+          echo ""
+          echo "Environment variables set:"
+          echo "CUSTOM_VAR=hello_from_setup"
+          echo "PROJECT_ROOT=${{ github.workspace }}"
+          echo "BUILD_TIME=$(date -Iseconds)"
+
+      # -----------------------------------------------------------------------
+      # EXPERIMENT: Create workspace artifacts
+      # Files created here persist for Copilot to use
+      # -----------------------------------------------------------------------
+      - name: "[Experiment] Create workspace artifacts"
+        run: |
+          # Create a directory for build artifacts
+          mkdir -p .build
+          
+          # Create a file that Copilot can reference
+          echo "Setup completed at: $(date -Iseconds)" > .build/setup-info.txt
+          echo "Runner: ${{ runner.os }}-${{ runner.arch }}" >> .build/setup-info.txt
+          echo "Workflow Run ID: ${{ github.run_id }}" >> .build/setup-info.txt
+          
+          echo "Created .build/setup-info.txt with:"
+          cat .build/setup-info.txt
+
+      # -----------------------------------------------------------------------
+      # FINAL: Verify setup completion
+      # -----------------------------------------------------------------------
+      - name: "[Experiment] Setup verification complete"
+        run: |
+          echo "=============================================="
+          echo "  COPILOT SETUP STEPS COMPLETED SUCCESSFULLY  "
+          echo "=============================================="
+          echo ""
+          echo "The runner environment is now ready for Copilot."
+          echo "Copilot will have access to:"
+          echo "  - All checked out repository files"
+          echo "  - All pre-installed tools listed above"
+          echo "  - Any dependencies installed in this workflow"
+          echo "  - Environment variables set in this workflow"
+          echo ""
+          echo "Custom environment variables available:"
+          echo "  CUSTOM_VAR=$CUSTOM_VAR"
+          echo "  PROJECT_ROOT=$PROJECT_ROOT"
+          echo "  BUILD_TIME=$BUILD_TIME"
