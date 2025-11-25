@@ -38,7 +38,7 @@ jobs:
   # ============================================================================
   # SETUP JOB: This is where environment preparation happens
   # ============================================================================
-  setup:
+  copilot-setup-steps:
     # Runner type - this is the machine Copilot will use
     # Options: ubuntu-latest, ubuntu-22.04, ubuntu-24.04, windows-latest, macos-latest
     runs-on: ubuntu-latest
