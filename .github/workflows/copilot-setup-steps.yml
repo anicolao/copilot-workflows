@@ -37,8 +37,9 @@ permissions:
 jobs:
   # ============================================================================
   # SETUP JOB: This is where environment preparation happens
+  # The job MUST be named 'copilot-setup-steps' for Copilot to recognize it
   # ============================================================================
-  setup:
+  copilot-setup-steps:
     # Runner type - this is the machine Copilot will use
     # Options: ubuntu-latest, ubuntu-22.04, ubuntu-24.04, windows-latest, macos-latest
     runs-on: ubuntu-latest
@@ -58,6 +59,46 @@ jobs:
           # Fetch full history for better git operations
           # Set to 1 for shallow clone (faster but limited git history)
           fetch-depth: 0
+
+      # -----------------------------------------------------------------------
+      # STEP 2: Install Nix package manager
+      # Nix provides reproducible development environments
+      # This allows using nix-shell, nix develop, and flakes
+      # -----------------------------------------------------------------------
+      - name: Install Nix
+        uses: cachix/install-nix-action@v30
+        with:
+          # Enable flakes and nix-command experimental features
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      # -----------------------------------------------------------------------
+      # STEP 3: Install and configure direnv
+      # direnv automatically loads environment variables from .envrc files
+      # Combined with Nix, it provides automatic environment activation
+      # -----------------------------------------------------------------------
+      - name: Install direnv
+        run: |
+          # Install direnv using nix
+          nix profile install nixpkgs#direnv
+          
+          # Verify installation
+          echo "direnv version: $(direnv --version)"
+
+      # -----------------------------------------------------------------------
+      # STEP 4: Allow direnv in the repository
+      # This pre-authorizes the .envrc file so Copilot doesn't need to
+      # -----------------------------------------------------------------------
+      - name: Allow direnv in repository
+        run: |
+          # Allow direnv for this repository
+          direnv allow . || echo "No .envrc file found (this is OK if the project doesn't use one yet)"
+          
+          # If .envrc exists, load it to set up the environment
+          if [ -f .envrc ]; then
+            echo "Found .envrc, loading environment..."
+            eval "$(direnv export bash)" || echo "Note: direnv export had non-zero exit (may be normal if .envrc has no exports)"
+          fi
 
       # -----------------------------------------------------------------------
       # EXPERIMENT: Print environment information
@@ -120,6 +161,10 @@ jobs:
           echo "apt: $(apt --version 2>/dev/null | head -1 || echo 'not installed')"
           echo "yarn: $(yarn --version 2>/dev/null || echo 'not installed')"
           echo "cargo: $(cargo --version 2>/dev/null || echo 'not installed')"
+          echo ""
+          echo "=== NIX & DIRENV ==="
+          echo "Nix: $(nix --version 2>/dev/null || echo 'not installed')"
+          echo "direnv: $(direnv --version 2>/dev/null || echo 'not installed')"
 
       # -----------------------------------------------------------------------
       # EXAMPLE: Install project dependencies
